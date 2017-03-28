@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <link rel="stylesheet" href="http://cdn.bootcss.com/bootstrap/3.3.0/css/bootstrap.min.css">
+    <script src="/static/js/JQuery/jquery-3.1.1.min.js"></script>
+    <script src="http://cdn.bootcss.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+    <title>服务器管理</title>
+    <script type="text/javascript" src="/static/js/admin.js"></script>
+</head>
+
+<body style="padding-top: 70px" onload="browserType();">
+    <div class="container">
+        <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+            <div class="container">
+                <span>Powered by 漓江里的大虾.QQ:50347187</span>
+                <div class="pull-right">
+                    <a class="btn btn-primary btn-large" href="/login?exit=true">登出</a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="row clearfix">
+            <div class="col-sm-2 column">
+                <div class="bs-docs-sidebar hidden-print hidden-xs hidden-sm affix" role="complementary">
+                    <ul class="nav bs-docs-sidenav">
+                        <li><a href="javascript:void(0)" onclick="return browserType();">启动参数概览</a></li>
+                        <li><a href="javascript:void(0)" onclick="return browserType();">世界场景参数</a></li>
+                        <li><a href="javascript:void(0)" onclick="return defGoodsInfo();">击落概率参数</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-sm-10 column" id="pages">
+
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
