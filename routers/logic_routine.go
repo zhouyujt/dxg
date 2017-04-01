@@ -35,9 +35,9 @@ type requestData struct {
 	data   []byte
 }
 
-func NewLogicRoutine(tickDuration time.Duration, handlers *map[int]controllers.Controller, clientMgr peer.ClientManager) *LogicRoutine {
+func NewLogicRoutine(tickDuration time.Duration, handlers *map[int]controllers.Controller, clientMgr peer.ClientManager, cache int) *LogicRoutine {
 	r := new(LogicRoutine)
-	r.requestChan = make(chan requestData, 10)
+	r.requestChan = make(chan requestData, cache)
 	r.tickDuration = tickDuration
 	r.id = makeRoutineID()
 	r.userData = make(map[string]interface{})

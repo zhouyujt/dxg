@@ -24,11 +24,16 @@ func NewLogicRoutineManager(handlers *map[int]controllers.Controller, clientMgr 
 }
 
 // AddRoutine returns a new LogicRoutine's id.the new routine will working when router's rule dispached.
-func (mgr *LogicRoutineManager) AddRoutine(tickDuration time.Duration) uint64 {
+func (mgr *LogicRoutineManager) AddRoutine(tickDuration time.Duration, cache ...int) uint64 {
 	mgr.routinesLocker.Lock()
 	defer mgr.routinesLocker.Unlock()
 
-	r := NewLogicRoutine(tickDuration, mgr.handlers, mgr.clientMgr)
+	c := 10
+	if len(cache) != 0 {
+		c = cache[0]
+	}
+
+	r := NewLogicRoutine(tickDuration, mgr.handlers, mgr.clientMgr, c)
 	id := r.GetID()
 	mgr.routines[id] = r
 
