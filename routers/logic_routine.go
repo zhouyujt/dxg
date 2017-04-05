@@ -103,28 +103,19 @@ func (routine *LogicRoutine) heartbeat() {
 			select {
 			case data, ok := <-routine.requestChan:
 				if ok {
-					//log4go.Debug("current routine:", routine.GetID(), data.msgID)
 					c, ok := (*routine.handlers)[data.msgID]
 					if ok {
 						c.Proc(data.client, routine.clientMgr, data.msgID, data.data)
 					} else {
-						j2 := make(map[string]interface{})
-						json.Unmarshal(data.data, &j2)
-						log.Println("dispathMessage has no handler!", j2)
+						tmp := make(map[string]interface{})
+						json.Unmarshal(data.data, &tmp)
+						log.Println("dxg:dispathMessage has no handler!", tmp)
 					}
-				}
-
-				end := time.Now()
-				tt := end.Sub(begin)
-				if tt > routine.tickDuration {
-					//log4go.Warn("logic routine proc is too busy(1)!!!:", routine.GetID(), data.msgID, tt)
-					begin = end
-					break BREAK
 				}
 			case end := <-t.C:
 				tt := end.Sub(begin)
 				if tt-time.Millisecond*100 > routine.tickDuration {
-					log.Println("logic routine proc is too busy(2)!!!:", routine.GetID(), tt)
+					log.Println("dxg:logic routine proc is too busy!!!:", routine.GetID(), tt)
 				}
 				begin = end
 				break BREAK
