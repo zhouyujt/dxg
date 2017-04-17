@@ -3,10 +3,9 @@ package routers
 import (
 	"log"
 	"sync"
-	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/zhouyujt/dxg/parsers"
+	"golang.org/x/net/websocket"
 )
 
 var nextClientID = uint64(0)
@@ -40,7 +39,9 @@ func newClient(conn *websocket.Conn, msgParser parsers.Parser) *clientImpl {
 func (c *clientImpl) readMessage(maxPackageLen uint32) (msgID int, msg []byte, disconnect bool) {
 	disconnect = false
 
-	_, buff, err := c.conn.ReadMessage()
+	//_, buff, err := c.conn.ReadMessage()
+	buff := make([]byte, 0)
+	err := websocket.Message.Receive(c.conn, &buff)
 	if err != nil {
 		log.Println("read message error:", err)
 		disconnect = true
@@ -64,8 +65,7 @@ func (c *clientImpl) writeMessage(msg []byte) {
 	c.writeLocker.Lock()
 	defer c.writeLocker.Unlock()
 
-	c.conn.SetWriteDeadline(time.Unix(time.Now().Unix()+5, 0))
-	c.conn.WriteMessage(websocket.TextMessage, newMsg)
+	websocket.Message.Send(c.conn, newMsg)
 }
 
 func makeClientID() uint64 {

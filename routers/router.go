@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/zhouyujt/dxg/config"
 	"github.com/zhouyujt/dxg/controllers"
 	"github.com/zhouyujt/dxg/parsers"
 	"github.com/zhouyujt/dxg/peer"
+	"golang.org/x/net/websocket"
 )
 
 const (
@@ -75,23 +75,13 @@ func (router *Router) Run(port int, path string, cfg *config.Config) {
 			http.Handle("/static/js/", http.FileServer(http.Dir("webmanager")))
 			http.Handle(cfg.WebManager.Path, router.webManager)
 		}
-		http.Handle(path, router)
+		//http.Handle(path, router)
+		http.Handle(path, websocket.Handler(router.OnWebSocket))
 		log.Fatal(http.ListenAndServe(`0.0.0.0:`+strconv.Itoa(port), nil))
 	}()
 }
 
-func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var upgrader = websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool { return true },
-	}
-
-	//var upgrader = websocket.Upgrader{}
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println("upgrade err:", err)
-		return
-	}
-
+func (router *Router) OnWebSocket(conn *websocket.Conn) {
 	client := newClient(conn, router.parser)
 	router.ClientMgr.addClient(client)
 	defer router.ClientMgr.delClient(client.GetClientID())
