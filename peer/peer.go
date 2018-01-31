@@ -8,6 +8,7 @@ type Client interface {
 	GetUserData(key string) (interface{}, bool)
 	DeleteUserData(key string)
 	DeleteAllUserData()
+	GetMsgChan() chan []byte
 }
 
 type ClientManager interface {

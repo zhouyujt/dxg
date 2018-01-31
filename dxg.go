@@ -18,15 +18,34 @@ var (
 	Config *config.Config
 )
 
+const (
+	ServerTypeWebsocket = iota
+	ServerTypeTCP
+	ServerTypeUDP
+)
+
 func init() {
 	router = routers.NewRouter()
 	Config = config.NewConfig("config.ini")
 }
 
-func Run(port int, path string) {
-	log.Println("dxg is running...")
+func Run(port int, serverType int, path ...string) {
+	switch serverType {
+	case ServerTypeWebsocket:
+		s := "/ws"
+		if len(path) != 0 {
+			s = path[0]
+		}
 
-	go router.Run(port, path, Config)
+		log.Println("dxg is running as websocket...")
+		go router.RunAsWebSocket(port, s, Config)
+	case ServerTypeTCP:
+		log.Println("dxg is running as tcp...")
+		go router.RunAsTcp(port)
+	case ServerTypeUDP:
+		log.Println("dxg is running as udp...")
+		go router.RunAsUdp(port)
+	}
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)

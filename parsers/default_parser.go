@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	PacketHeadLen uint32 = 2 /*proto flag*/ + 4 /*packet len*/ + 4 /*reserved*/
-	MaxPackageLen        = 0
+	PacketHeadLen int = 2 /*proto flag*/ + 4 /*packet len*/ + 4 /*reserved*/
+	MaxPackageLen     = 0
 )
 
 type DefaultParser struct {
@@ -28,7 +28,7 @@ type Packet struct {
 //              +---------------------------------------------------------------------------------------------------------------------------------------+
 func (parser DefaultParser) Unmarshal(data []byte, magic int) (msgID int, contents []byte, err error) {
 	packet := Packet{}
-	if 0 == bytes.Compare(data[:2], []byte{0x01, byte(magic)}) {
+	if len(data) >= PacketHeadLen && 0 == bytes.Compare(data[:2], []byte{0x01, byte(magic)}) {
 		var packageLen uint32
 		var reserved uint32
 		binary.Read(bytes.NewBuffer(data[2:6]), binary.BigEndian, &packageLen)
@@ -47,6 +47,8 @@ func (parser DefaultParser) Unmarshal(data []byte, magic int) (msgID int, conten
 			tmp := fmt.Sprintf("DefaultParsor over MaxPackageLen: %d,drop whole package", packageLen)
 			err = errors.New(tmp)
 		}
+	} else {
+		err = errors.New("DefaultParsor Unmarshal failed")
 	}
 
 	msgID = packet.MsgID

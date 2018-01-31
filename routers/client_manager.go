@@ -9,21 +9,21 @@ import (
 
 type clientManagerImpl struct {
 	clientLocker sync.RWMutex
-	clientMap    map[uint64]*clientImpl
+	clientMap    map[uint64]peer.Client
 }
 
 func newClientManager() *clientManagerImpl {
 	m := new(clientManagerImpl)
-	m.clientMap = make(map[uint64]*clientImpl)
+	m.clientMap = make(map[uint64]peer.Client)
 
 	return m
 }
 
-func (m *clientManagerImpl) addClient(c *clientImpl) {
+func (m *clientManagerImpl) addClient(c peer.Client) {
 	m.clientLocker.Lock()
 	defer m.clientLocker.Unlock()
 
-	m.clientMap[c.id] = c
+	m.clientMap[c.GetClientID()] = c
 }
 
 func (m *clientManagerImpl) delClient(clientID uint64) {
@@ -74,7 +74,7 @@ func (m *clientManagerImpl) Broadcast(data []byte, condition func(peer.Client) b
 					}
 				}()
 				pushMsgChan <- data
-			}(c.sendMsgChan)
+			}(c.GetMsgChan())
 		}
 	}
 }

@@ -3,6 +3,7 @@ package routers
 import (
 	"encoding/json"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 	"time"
@@ -62,8 +63,7 @@ func (router *Router) SetRule(rule Rule) {
 	router.ruleFunc = nil
 }
 
-// Run accept client request
-func (router *Router) Run(port int, path string, cfg *config.Config) {
+func (router *Router) RunAsWebSocket(port int, path string, cfg *config.Config) {
 	router.webManager = NewWebManager(cfg)
 
 	// start websocket server
@@ -81,8 +81,31 @@ func (router *Router) Run(port int, path string, cfg *config.Config) {
 	}()
 }
 
+func (router *Router) RunAsTcp(port int) {
+	go func() {
+		l, err := net.Listen("tcp", `0.0.0.0:`+strconv.Itoa(port))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for {
+			conn, err := l.Accept()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			router.OnTcp(conn)
+		}
+	}()
+}
+
+func (router *Router) RunAsUdp(port int) {
+	go func() {
+	}()
+}
+
 func (router *Router) OnWebSocket(conn *websocket.Conn) {
-	client := newClient(conn, router.parser)
+	client := newWsClient(conn, router.parser)
 	router.ClientMgr.addClient(client)
 	defer router.ClientMgr.delClient(client.GetClientID())
 	defer close(client.sendMsgChan)
@@ -121,6 +144,52 @@ PROC:
 			break PROC
 		}
 	}
+}
+
+func (router *Router) OnTcp(conn net.Conn) {
+	client := newTcpClient(conn, router.parser)
+	router.ClientMgr.addClient(client)
+	defer router.ClientMgr.delClient(client.GetClientID())
+	defer close(client.sendMsgChan)
+	defer close(client.closeChan)
+
+	router.dispathMessage(client, ConnectMsgID, make([]byte, 0))
+
+	// message loop
+	msgLoopChan := make(chan bool)
+	go func() {
+		for {
+			msgID, msg, disconnect := client.readMessage(0)
+			if disconnect {
+				router.dispathMessage(client, DisconnectMsgID, make([]byte, 0))
+				client.Close()
+				break
+			}
+
+			router.dispathMessage(client, msgID, msg)
+		}
+		msgLoopChan <- true
+	}()
+
+	// response and push proc
+PROC:
+	for {
+		select {
+		case sendMsg, ok := <-client.sendMsgChan:
+			if ok {
+				client.writeMessage(sendMsg)
+			}
+		case <-client.closeChan:
+			time.Sleep(time.Second) // wait a moment for client.writeMessage
+			conn.Close()
+			<-msgLoopChan // wait for message loop routine exit
+			break PROC
+		}
+	}
+}
+
+func (router *Router) OnUdp(conn *net.Conn) {
+
 }
 
 func (router *Router) Handle(msgID int, c controllers.Controller) {
